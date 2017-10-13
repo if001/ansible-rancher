@@ -1,0 +1,7 @@
+- name: count exist docker container
+  shell: docker ps | wc -l
+  register: dockerps
+
+- name: rancher install
+  shell: docker run -d --restart=unless-stopped -p {{ PORT }}:{{ PORT }} rancher/server
+  when: dockerps.stdout == "1"

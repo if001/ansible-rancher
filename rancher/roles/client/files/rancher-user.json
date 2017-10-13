@@ -1,0 +1,8 @@
+{
+"type":"localAuthConfig",
+"accessMode": "unrestricted",
+"enabled": true,
+"name": "guest",
+"username": "guest",
+"password": "hogehoge"
+}

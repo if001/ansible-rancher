@@ -1,0 +1,6 @@
+ - name: rancher_vars
+   colon: ':'
+   # ip should not be "localhost"
+   IP: localhost
+   PORT: 8080
+   URL: http://{{ IP }}:{{ PORT }}

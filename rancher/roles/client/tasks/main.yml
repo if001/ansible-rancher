@@ -1,0 +1,46 @@
+- copy: 
+    src: src/get_key.sh 
+    dest: /home/guest/get_key.sh
+    mode: 0755
+
+- name: read token
+  shell: /home/guest/get_key.sh | jq .
+  register: access_token
+
+- name: debug print
+  debug: msg={{ (access_token.stdout|from_json).access_key }}
+
+
+- name: enable access control to rancher server
+  ignore_errors: yes
+  uri:
+    url: http://localhost:8080/v2-beta/localauthconfig
+    method: POST
+    body: "{{ lookup('file','files/rancher-user.json') }}"
+    body_format: json
+    HEADER_Content-Type: "application/json"
+  register: resp
+
+
+- name: get project id
+  shell: 'curl -u {{(access_token.stdout|from_json).access_key}}{{colon}}{{(access_token.stdout|from_json).secret_key}} \
+               -X GET {{ URL }}//v1/projects | jq .data[0].id '
+  register: project_id
+
+- name: debug id
+  debug: var=project_id.stdout
+
+- name: get register token
+  shell: 'curl -v -u {{(access_token.stdout|from_json).access_key}}{{colon}}{{(access_token.stdout|from_json).secret_key}} \
+           -X GET {{URL}}/v2-beta/projects/{{project_id.stdout}}/registrationtokens | jq -r .data[0].token'
+  register: register_token
+
+
+- name: print
+  debug: var=register_token.stdout
+
+
+- name: add host
+  shell: docker run --rm --privileged -v /var/run/docker.sock:/var/run/docker.sock -v /var/lib/rancher:/var/lib/rancher rancher/agent:v1.2.6 {{ ansible_eth0.ipv4.address }}{{colon}}{{PORT}}/v1/scripts/{{register_token.stdout}}
+
+
